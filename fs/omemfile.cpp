@@ -2,6 +2,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "fs/omemfile.h"
+#include "macros/macros.h"
 
 bool fs::omemfile::open(const char* pathname, mode_t mode)
 {
@@ -45,24 +46,32 @@ ssize_t fs::omemfile::write(const void* buf, size_t count)
   const uint8_t* b = reinterpret_cast<const uint8_t*>(buf);
   off_t c = count;
 
-  // If the data doesn't fit...
-  off_t left;
-  if ((left = _M_filesize - _M_off) < c) {
-    if (left > 0) {
-      memcpy(reinterpret_cast<uint8_t*>(_M_addr) + (_M_off % kFileIncrement), b, left);
-      _M_off += left;
+  while (c > 0) {
+    off_t n = MIN(c, kFileIncrement);
 
-      b += left;
-      c -= left;
+    // If the data doesn't fit...
+    off_t left;
+    if ((left = _M_filesize - _M_off) < n) {
+      if (left > 0) {
+        memcpy(reinterpret_cast<uint8_t*>(_M_addr) + (_M_off % kFileIncrement), b, left);
+        _M_off += left;
+
+        b += left;
+        c -= left;
+        n -= left;
+      }
+
+      if (!increase()) {
+        return -1;
+      }
     }
 
-    if (!increase()) {
-      return -1;
-    }
+    memcpy(reinterpret_cast<uint8_t*>(_M_addr) + (_M_off % kFileIncrement), b, n);
+    _M_off += n;
+
+    b += n;
+    c -= n;
   }
-
-  memcpy(reinterpret_cast<uint8_t*>(_M_addr) + (_M_off % kFileIncrement), b, c);
-  _M_off += c;
 
   return count;
 }
