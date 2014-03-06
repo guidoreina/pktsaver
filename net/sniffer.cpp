@@ -106,6 +106,16 @@ bool net::sniffer::create(const char* interface, const char* pathname, size_t ri
     return false;
   }
 
+  // Put the interface in promiscuous mode.
+  struct packet_mreq mr;
+  memset(&mr, 0, sizeof(struct packet_mreq));
+  mr.mr_ifindex = ifr.ifr_ifindex;
+  mr.mr_type = PACKET_MR_PROMISC;
+  if (setsockopt(_M_fd, SOL_PACKET, PACKET_ADD_MEMBERSHIP, &mr, sizeof(struct packet_mreq)) < 0) {
+    perror("setsockopt");
+    return false;
+  }
+
   // Setup packet ring.
   if (!setup_packet_ring(ring_size)) {
     return false;
