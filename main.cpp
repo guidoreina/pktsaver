@@ -146,7 +146,7 @@ bool parse_size(const char* s, size_t min, size_t max, size_t& size)
 
       n = tmp;
     } else if (*s == 'M') {
-      uint64_t tmp = n * (1024L * 1024L);
+      uint64_t tmp = n * (1024ULL * 1024ULL);
 
       // Overflow?
       if (tmp < n) {
@@ -165,7 +165,7 @@ bool parse_size(const char* s, size_t min, size_t max, size_t& size)
       size = static_cast<size_t>(tmp);
       return true;
     } else if (*s == 'G') {
-      uint64_t tmp = n * (1024L * 1024L * 1024L);
+      uint64_t tmp = n * (1024ULL * 1024ULL * 1024ULL);
 
       // Overflow?
       if (tmp < n) {
@@ -190,5 +190,10 @@ bool parse_size(const char* s, size_t min, size_t max, size_t& size)
     s++;
   }
 
-  return false;
+  if ((n < min) || (n > max)) {
+    return false;
+  }
+
+  size = static_cast<size_t>(n);
+  return true;
 }
